@@ -1,1 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<form method="post" class="bg-white p-6 max-w-md mx-auto rounded shadow">
+  <input name="username" placeholder="Username" class="w-full mb-3 p-2 border">
+  <input type="password" name="password" placeholder="Password" class="w-full mb-3 p-2 border">
+  <select name="role" class="w-full mb-3 p-2 border">
+    <option value="student">Student</option>
+    <option value="admin">Admin</option>
+  </select>
+  <button class="bg-green-600 text-white w-full p-2">Register</button>
+</form>
+{% endblock %}
 
