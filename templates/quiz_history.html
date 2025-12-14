@@ -1,1 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Quiz History</h2>
+
+<table class="w-full bg-white rounded shadow">
+  <tr class="bg-gray-200">
+    <th class="p-2 text-left">Attempt</th>
+    <th class="p-2 text-left">Score</th>
+  </tr>
+  {% for r in results %}
+  <tr>
+    <td class="p-2">Attempt {{ loop.index }}</td>
+    <td class="p-2">{{ r.score }} / {{ r.total }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
 
