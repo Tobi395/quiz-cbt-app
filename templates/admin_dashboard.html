@@ -1,1 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Admin Dashboard</h2>
+
+<div class="grid md:grid-cols-2 gap-6">
+  <div class="bg-white p-6 rounded shadow">
+    <h3 class="font-semibold text-lg">Create Questions</h3>
+    <p class="text-sm text-gray-600 mb-4">Add new quiz questions</p>
+    <a href="/create-question" class="bg-blue-600 text-white px-4 py-2 rounded">Create</a>
+  </div>
+
+  <div class="bg-white p-6 rounded shadow">
+    <h3 class="font-semibold text-lg">System Info</h3>
+    <p class="text-sm text-gray-600">CBT system running normally</p>
+  </div>
+</div>
+{% endblock %}
 
