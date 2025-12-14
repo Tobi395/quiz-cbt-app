@@ -3,7 +3,14 @@
 <h2 class="text-2xl font-bold mb-6">Create Question</h2>
 
 <form method="post" class="bg-white p-6 rounded shadow max-w-xl">
+
   <input name="question" placeholder="Question" class="w-full p-2 mb-3 border">
+
+  <select name="subject_id" class="w-full p-2 mb-3 border">
+    {% for s in subjects %}
+    <option value="{{ s.id }}">{{ s.name }}</option>
+    {% endfor %}
+  </select>
 
   <input name="a" placeholder="Option A" class="w-full p-2 mb-3 border">
   <input name="b" placeholder="Option B" class="w-full p-2 mb-3 border">
@@ -17,7 +24,8 @@
     <option value="D">Correct Answer: D</option>
   </select>
 
-  <button class="bg-blue-600 text-white px-4 py-2 rounded">Save Question</button>
+  <button class="bg-blue-600 text-white px-4 py-2 rounded">
+    Save Question
+  </button>
 </form>
 {% endblock %}
-
