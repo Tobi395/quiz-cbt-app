@@ -1,1 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Quiz</h2>
+
+<p class="mb-4 font-semibold text-red-600">
+  Time Left: <span id="timer">60</span> seconds
+</p>
+
+<form id="quizForm" method="post" action="/submit-quiz">
+  {% for q in questions %}
+  <div class="bg-white p-4 rounded shadow mb-4">
+    <p class="font-semibold mb-2">{{ q.question }}</p>
+
+    <label class="block"><input type="radio" name="{{ q.id }}" value="A"> {{ q.option_a }}</label>
+    <label class="block"><input type="radio" name="{{ q.id }}" value="B"> {{ q.option_b }}</label>
+    <label class="block"><input type="radio" name="{{ q.id }}" value="C"> {{ q.option_c }}</label>
+    <label class="block"><input type="radio" name="{{ q.id }}" value="D"> {{ q.option_d }}</label>
+  </div>
+  {% endfor %}
+
+  <button class="bg-green-600 text-white px-6 py-2 rounded">Submit Quiz</button>
+</form>
+
+<script>
+let timeLeft = 60;
+const timer = setInterval(() => {
+  document.getElementById("timer").innerText = timeLeft;
+  timeLeft--;
+  if (timeLeft < 0) {
+    clearInterval(timer);
+    document.getElementById("quizForm").submit();
+  }
+}, 1000);
+</script>
+{% endblock %}
 
