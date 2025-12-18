@@ -1,34 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Quiz CBT System</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBT System</title>
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background: #f3f4f6;
+    }
+  </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen">
 
-<nav class="bg-blue-700 text-white px-6 py-4 flex justify-between items-center">
-  <h1 class="text-lg font-bold">Quiz CBT</h1>
-
-  <div class="space-x-4 text-sm">
-    {% if current_user.is_authenticated %}
-      <a href="{{ url_for('logout') }}" class="hover:underline">Logout</a>
-    {% else %}
-      <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
-      <a href="{{ url_for('register') }}" class="hover:underline">Register</a>
-    {% endif %}
-  </div>
+<nav class="bg-white shadow p-4 flex justify-between">
+  <span class="font-bold">CBT System</span>
+  {% if current_user.is_authenticated %}
+    <a href="{{ url_for('logout') }}" class="text-red-600">Logout</a>
+  {% endif %}
 </nav>
 
-<main class="max-w-6xl mx-auto p-6">
+<main class="p-4">
   {% block content %}{% endblock %}
 </main>
-
-<footer class="text-center text-xs text-gray-500 py-4">
-  © {{ 2025 }} Quiz CBT System
-</footer>
 
 </body>
 </html>
