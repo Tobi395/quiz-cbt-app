@@ -287,47 +287,45 @@ def admin_dashboard():
     subjects = Subject.query.all()
     return render_template("admin_dashboard.html", subjects=subjects)
 
-@app.route("/admin/upload-csv", methods=["GET", "POST"])
+# 🔥 CSV UPLOAD – DASHBOARD ONLY (NO upload_csv.html)
+@app.route("/admin/upload-csv", methods=["POST"])
 @admin_required
 def upload_csv():
-    if request.method == "POST":
-        file = request.files.get("file")
+    file = request.files.get("file")
 
-        if not file or not file.filename.endswith(".csv"):
-            return "Invalid CSV file"
+    if not file or not file.filename.endswith(".csv"):
+        return "Invalid CSV file"
 
-        reader = csv.DictReader(TextIOWrapper(file.stream, encoding="utf-8"))
+    reader = csv.DictReader(TextIOWrapper(file.stream, encoding="utf-8"))
 
-        for row in reader:
-            error = validate_csv_row(row)
-            if error:
-                return f"CSV Error: {error}"
+    for row in reader:
+        error = validate_csv_row(row)
+        if error:
+            return f"CSV Error: {error}"
 
-            subject_name = row["subject"].strip()
-            subject = Subject.query.filter_by(name=subject_name).first()
+        subject_name = row["subject"].strip()
+        subject = Subject.query.filter_by(name=subject_name).first()
 
-            if not subject:
-                subject = Subject(name=subject_name)
-                db.session.add(subject)
-                db.session.commit()
+        if not subject:
+            subject = Subject(name=subject_name)
+            db.session.add(subject)
+            db.session.commit()
 
-            question = Question(
-                subject_id=subject.id,
-                question=row["question"],
-                option_a=row["option_a"],
-                option_b=row["option_b"],
-                option_c=row["option_c"],
-                option_d=row["option_d"],
-                correct=row["correct"].upper(),
-                difficulty=row["difficulty"].lower()
-            )
+        question = Question(
+            subject_id=subject.id,
+            question=row["question"].strip(),
+            option_a=row["option_a"].strip(),
+            option_b=row["option_b"].strip(),
+            option_c=row["option_c"].strip(),
+            option_d=row["option_d"].strip(),
+            correct=row["correct"].upper(),
+            difficulty=row["difficulty"].lower()
+        )
 
-            db.session.add(question)
+        db.session.add(question)
 
-        db.session.commit()
-        return "CSV uploaded successfully"
-
-    return render_template("upload_csv.html")
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
 
 @app.route("/admin/results")
 @admin_required
