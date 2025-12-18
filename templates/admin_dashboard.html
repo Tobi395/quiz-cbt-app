@@ -1,18 +1,47 @@
 {% extends 'base.html' %}
 {% block content %}
+
 <h2 class="text-2xl font-bold mb-6">Admin Dashboard</h2>
 
 <div class="grid md:grid-cols-2 gap-6">
+
+  <!-- CREATE QUESTIONS (CSV UPLOAD) -->
   <div class="bg-white p-6 rounded shadow">
-    <h3 class="font-semibold text-lg">Create Questions</h3>
-    <p class="text-sm text-gray-600 mb-4">Add new quiz questions</p>
-    <a href="/create-question" class="bg-blue-600 text-white px-4 py-2 rounded">Create</a>
+    <h3 class="font-semibold text-lg mb-2">Upload Questions (CSV)</h3>
+    <p class="text-sm text-gray-600 mb-4">
+      Bulk upload quiz questions by subject and difficulty
+    </p>
+
+    <form action="{{ url_for('upload_csv') }}" method="POST" enctype="multipart/form-data">
+      <input
+        type="file"
+        name="file"
+        accept=".csv"
+        required
+        class="block w-full text-sm text-gray-600 mb-4
+               file:mr-4 file:py-2 file:px-4
+               file:rounded file:border-0
+               file:text-sm file:font-semibold
+               file:bg-blue-50 file:text-blue-700
+               hover:file:bg-blue-100"
+      />
+
+      <button
+        type="submit"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+      >
+        Upload CSV
+      </button>
+    </form>
   </div>
 
+  <!-- SYSTEM INFO -->
   <div class="bg-white p-6 rounded shadow">
-    <h3 class="font-semibold text-lg">System Info</h3>
-    <p class="text-sm text-gray-600">CBT system running normally</p>
+    <h3 class="font-semibold text-lg mb-2">System Info</h3>
+    <p class="text-sm text-gray-600 mb-1">CBT system running normally</p>
+    <p class="text-sm text-gray-600">Admin: {{ current_user.email }}</p>
   </div>
+
 </div>
-{% endblock %}
 
+{% endblock %}
