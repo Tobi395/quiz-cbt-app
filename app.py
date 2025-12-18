@@ -167,37 +167,32 @@ def autosave():
 @app.route("/submit/<int:subject_id>", methods=["POST"])
 @login_required
 def submit(subject_id):
-    # ⏱ TIME ENFORCEMENT
     start_time = datetime.fromisoformat(session.get("start_time"))
     if datetime.utcnow() - start_time > timedelta(minutes=50):
-        return "Time expired. Quiz auto-submitted."
+        return "Time expired"
 
     answers = Answer.query.filter_by(user_id=current_user.id).all()
     score = 0
-    analytics = []
 
     for a in answers:
         q = Question.query.get(a.question_id)
-        if not q:
-            continue
-
-        correct = a.selected == q.correct
-        if correct:
+        if q and a.selected == q.correct:
             score += 1
 
-        analytics.append({
-            "question": q.question,
-            "selected": a.selected,
-            "correct": q.correct,
-            "is_correct": correct
-        })
+    total = len(answers)
 
-    return render_template(
-        "result.html",
+    # ✅ save attempt
+    attempt = Attempt(
+        user_id=current_user.id,
+        subject_id=subject_id,
         score=score,
-        total=len(analytics),
-        analytics=analytics
+        total=total
     )
+    db.session.add(attempt)
+    db.session.commit()
+
+    return redirect(url_for("student_dashboard"))
+
 
 
 # ===================== ADMIN =====================
