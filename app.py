@@ -47,6 +47,15 @@ class Answer(db.Model):
     selected = db.Column(db.String(1))
 
 
+class Attempt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    subject_id = db.Column(db.Integer, nullable=False)
+    score = db.Column(db.Integer)
+    total = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 # ===================== LOGIN =====================
 
 @login_manager.user_loader
