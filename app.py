@@ -111,11 +111,18 @@ def logout():
 @app.route("/quiz/<int:subject_id>")
 @login_required
 def take_quiz(subject_id):
-    subject = Subject.query.get_or_404(subject_id)
+    # ❌ prevent retake
+    existing = Attempt.query.filter_by(
+        user_id=current_user.id,
+        subject_id=subject_id
+    ).first()
 
-    questions = Question.query.filter_by(subject_id=subject.id).order_by(
-        db.func.random()
-    ).limit(40).all()
+    if existing:
+        return redirect(url_for("student_dashboard"))
+
+    subject = Subject.query.get_or_404(subject_id)
+    questions = Question.query.filter_by(subject_id=subject.id)\
+        .order_by(db.func.random()).limit(40).all()
 
     session["start_time"] = datetime.utcnow().isoformat()
     session["subject"] = subject.name
@@ -125,6 +132,7 @@ def take_quiz(subject_id):
         questions=questions,
         subject_id=subject.id
     )
+
 
 
 # ===================== AUTOSAVE =====================
