@@ -1,5 +1,26 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2 class="text-3xl font-bold text-center">Welcome to Quiz CBT System</h2>
-{% endblock %}
 
+<div class="text-center mt-24">
+  <h2 class="text-3xl md:text-4xl font-bold mb-4">
+    Welcome to Quiz CBT System
+  </h2>
+
+  <p class="text-gray-600 mb-8">
+    Secure Computer-Based Examination Platform
+  </p>
+
+  <div class="space-x-4">
+    <a href="{{ url_for('login') }}"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded">
+       Login
+    </a>
+
+    <a href="{{ url_for('register') }}"
+       class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded">
+       Register
+    </a>
+  </div>
+</div>
+
+{% endblock %}
