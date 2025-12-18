@@ -1,26 +1,71 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="text-center mt-24">
-  <h2 class="text-3xl md:text-4xl font-bold mb-4">
-    Welcome to Quiz CBT System
-  </h2>
+<section class="min-h-[70vh] flex items-center justify-center">
+  <div class="text-center max-w-2xl">
 
-  <p class="text-gray-600 mb-8">
-    Secure Computer-Based Examination Platform
-  </p>
+    <h2 class="text-3xl md:text-4xl font-bold mb-4">
+      Welcome to Quiz CBT System
+    </h2>
 
-  <div class="space-x-4">
-    <a href="{{ url_for('login') }}"
-       class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded">
-       Login
-    </a>
+    <p class="text-gray-600 mb-8">
+      A secure, fast, and reliable Computer-Based Examination platform
+    </p>
 
-    <a href="{{ url_for('register') }}"
-       class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded">
-       Register
-    </a>
+    <!-- CTA BUTTONS -->
+    {% if not current_user.is_authenticated %}
+      <div class="flex justify-center gap-4">
+        <a href="{{ url_for('login') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded transition">
+           Login
+        </a>
+
+        <a href="{{ url_for('register') }}"
+           class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded transition">
+           Register
+        </a>
+      </div>
+    {% else %}
+      <div class="flex justify-center gap-4">
+        {% if current_user.is_admin %}
+          <a href="{{ url_for('admin_dashboard') }}"
+             class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded">
+             Admin Dashboard
+          </a>
+        {% else %}
+          <a href="{{ url_for('student_dashboard') }}"
+             class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded">
+             Go to Dashboard
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- FEATURES -->
+    <div class="grid md:grid-cols-3 gap-6 mt-12 text-left">
+      <div class="bg-white p-5 rounded shadow">
+        <h3 class="font-semibold mb-2">🔒 Secure Login</h3>
+        <p class="text-sm text-gray-600">
+          OTP-verified registration and encrypted passwords
+        </p>
+      </div>
+
+      <div class="bg-white p-5 rounded shadow">
+        <h3 class="font-semibold mb-2">⏱ Timed Exams</h3>
+        <p class="text-sm text-gray-600">
+          40 questions completed within 50 minutes
+        </p>
+      </div>
+
+      <div class="bg-white p-5 rounded shadow">
+        <h3 class="font-semibold mb-2">📊 Instant Results</h3>
+        <p class="text-sm text-gray-600">
+          Download results instantly in PDF format
+        </p>
+      </div>
+    </div>
+
   </div>
-</div>
+</section>
 
 {% endblock %}
