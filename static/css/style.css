@@ -1,1 +1,27 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.question {
+  display: none;
+}
+
+input[type="radio"] {
+  margin-right: 8px;
+}
+
+button {
+  transition: background-color 0.2s ease;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* CBT focus mode */
+.exam-mode nav,
+.exam-mode footer {
+  display: none;
+}
 
