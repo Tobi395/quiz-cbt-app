@@ -1,10 +1,15 @@
 import os
 import random
 import string
+import csv
+from io import TextIOWrapper
 from datetime import datetime, timedelta
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
+from flask import (
+    Flask, render_template, request,
+    redirect, url_for, session, send_file
+)
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, login_user, login_required,
@@ -24,8 +29,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "DATABASE_URL",
-    "sqlite:///quiz.db"
+    "DATABASE_URL", "sqlite:///quiz.db"
 ).replace("postgres://", "postgresql://")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -48,17 +52,18 @@ class User(UserMixin, db.Model):
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), nullable=False, unique=True)
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"))
+    subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=False)
     question = db.Column(db.Text, nullable=False)
-    option_a = db.Column(db.String(200))
-    option_b = db.Column(db.String(200))
-    option_c = db.Column(db.String(200))
-    option_d = db.Column(db.String(200))
-    correct = db.Column(db.String(1))
+    option_a = db.Column(db.String(200), nullable=False)
+    option_b = db.Column(db.String(200), nullable=False)
+    option_c = db.Column(db.String(200), nullable=False)
+    option_d = db.Column(db.String(200), nullable=False)
+    correct = db.Column(db.String(1), nullable=False)
+    difficulty = db.Column(db.String(20), default="medium")
 
 class Result(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -100,6 +105,27 @@ def admin_required(func):
             return "Access denied"
         return func(*args, **kwargs)
     return wrapper
+
+ALLOWED_DIFFICULTIES = {"easy", "medium", "hard"}
+
+def validate_csv_row(row):
+    required = [
+        "subject", "question",
+        "option_a", "option_b", "option_c", "option_d",
+        "correct", "difficulty"
+    ]
+
+    for field in required:
+        if field not in row or not row[field].strip():
+            return f"Missing field: {field}"
+
+    if row["correct"].upper() not in {"A", "B", "C", "D"}:
+        return "Correct must be A, B, C, or D"
+
+    if row["difficulty"].lower() not in ALLOWED_DIFFICULTIES:
+        return "Difficulty must be easy, medium, or hard"
+
+    return None
 
 # -------------------------------------------------
 # ROUTES
@@ -159,20 +185,6 @@ def verify():
 
     return render_template("verify.html")
 
-# ---------- RESEND OTP ----------
-@app.route("/resend-otp", methods=["POST"])
-def resend_otp():
-    email = session.get("verify_email")
-    user = User.query.filter_by(email=email).first()
-
-    otp = generate_otp()
-    user.otp = otp
-    user.otp_expiry = datetime.utcnow() + timedelta(minutes=10)
-    db.session.commit()
-
-    send_otp_email(email, otp)
-    return redirect(url_for("verify"))
-
 # ---------- LOGIN ----------
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -219,7 +231,7 @@ def take_quiz(subject_id):
     session["start_time"] = datetime.utcnow().isoformat()
     session["subject"] = Subject.query.get(subject_id).name
 
-    return render_template("take_quiz.html", questions=questions, subject_id=subject_id)
+    return render_template("take_quiz.html", questions=questions)
 
 # ---------- SUBMIT QUIZ ----------
 @app.route("/submit/<int:subject_id>", methods=["POST"])
@@ -229,8 +241,8 @@ def submit(subject_id):
     if datetime.utcnow() - start_time > timedelta(minutes=50):
         return "Time expired"
 
-    question_ids = session.get("quiz_questions", [])
-    questions = Question.query.filter(Question.id.in_(question_ids)).all()
+    ids = session.get("quiz_questions", [])
+    questions = Question.query.filter(Question.id.in_(ids)).all()
 
     score = 0
     for q in questions:
@@ -254,17 +266,17 @@ def submit(subject_id):
 @login_required
 def result_pdf(result_id):
     result = Result.query.get_or_404(result_id)
-    file_path = f"result_{result.id}.pdf"
+    filename = f"result_{result.id}.pdf"
 
-    c = canvas.Canvas(file_path, pagesize=A4)
+    c = canvas.Canvas(filename, pagesize=A4)
     c.drawString(100, 800, "Quiz CBT Result Slip")
     c.drawString(100, 760, f"Student: {current_user.email}")
     c.drawString(100, 730, f"Subject: {result.subject}")
-    c.drawString(100, 700, f"Score: {result.score} / {result.total}")
+    c.drawString(100, 700, f"Score: {result.score}/{result.total}")
     c.drawString(100, 670, f"Date: {result.date.strftime('%Y-%m-%d')}")
     c.save()
 
-    return send_file(file_path, as_attachment=True)
+    return send_file(filename, as_attachment=True)
 
 # -------------------------------------------------
 # ADMIN ROUTES
@@ -275,28 +287,47 @@ def admin_dashboard():
     subjects = Subject.query.all()
     return render_template("admin_dashboard.html", subjects=subjects)
 
-@app.route("/admin/add-subject", methods=["POST"])
+@app.route("/admin/upload-csv", methods=["GET", "POST"])
 @admin_required
-def add_subject():
-    db.session.add(Subject(name=request.form["name"]))
-    db.session.commit()
-    return redirect(url_for("admin_dashboard"))
+def upload_csv():
+    if request.method == "POST":
+        file = request.files.get("file")
 
-@app.route("/admin/add-question", methods=["POST"])
-@admin_required
-def add_question():
-    q = Question(
-        subject_id=request.form["subject_id"],
-        question=request.form["question"],
-        option_a=request.form["a"],
-        option_b=request.form["b"],
-        option_c=request.form["c"],
-        option_d=request.form["d"],
-        correct=request.form["correct"]
-    )
-    db.session.add(q)
-    db.session.commit()
-    return redirect(url_for("admin_dashboard"))
+        if not file or not file.filename.endswith(".csv"):
+            return "Invalid CSV file"
+
+        reader = csv.DictReader(TextIOWrapper(file.stream, encoding="utf-8"))
+
+        for row in reader:
+            error = validate_csv_row(row)
+            if error:
+                return f"CSV Error: {error}"
+
+            subject_name = row["subject"].strip()
+            subject = Subject.query.filter_by(name=subject_name).first()
+
+            if not subject:
+                subject = Subject(name=subject_name)
+                db.session.add(subject)
+                db.session.commit()
+
+            question = Question(
+                subject_id=subject.id,
+                question=row["question"],
+                option_a=row["option_a"],
+                option_b=row["option_b"],
+                option_c=row["option_c"],
+                option_d=row["option_d"],
+                correct=row["correct"].upper(),
+                difficulty=row["difficulty"].lower()
+            )
+
+            db.session.add(question)
+
+        db.session.commit()
+        return "CSV uploaded successfully"
+
+    return render_template("upload_csv.html")
 
 @app.route("/admin/results")
 @admin_required
