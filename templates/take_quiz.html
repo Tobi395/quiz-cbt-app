@@ -1,36 +1,44 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2 class="text-2xl font-bold mb-4">Quiz</h2>
 
-<p class="mb-4 font-semibold text-red-600">
-  Time Left: <span id="timer">60</span> seconds
-</p>
-
-<form id="quizForm" method="post" action="/submit-quiz">
-  {% for q in questions %}
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <p class="font-semibold mb-2">{{ q.question }}</p>
-
-    <label class="block"><input type="radio" name="{{ q.id }}" value="A"> {{ q.option_a }}</label>
-    <label class="block"><input type="radio" name="{{ q.id }}" value="B"> {{ q.option_b }}</label>
-    <label class="block"><input type="radio" name="{{ q.id }}" value="C"> {{ q.option_c }}</label>
-    <label class="block"><input type="radio" name="{{ q.id }}" value="D"> {{ q.option_d }}</label>
+<div class="flex justify-between items-center mb-4">
+  <h2 class="font-bold text-lg">Examination</h2>
+  <div class="bg-red-600 text-white px-4 py-1 rounded text-sm">
+    Time Remaining
   </div>
-  {% endfor %}
+</div>
 
-  <button class="bg-green-600 text-white px-6 py-2 rounded">Submit Quiz</button>
+<form id="quizForm" method="post" action="/submit/{{ subject_id }}">
+
+{% for q in questions %}
+<div class="question bg-white p-5 rounded shadow mb-4 hidden">
+  <p class="font-semibold mb-3">{{ loop.index }}. {{ q.question }}</p>
+
+  {% for opt in ['A','B','C','D'] %}
+  <label class="block mb-2">
+    <input type="radio" name="{{ q.id }}" value="{{ opt }}">
+    Option {{ opt }}
+  </label>
+  {% endfor %}
+</div>
+{% endfor %}
+
+<div class="flex justify-between mt-6">
+  <button type="button" onclick="prevQ()" class="px-4 py-2 bg-gray-400 text-white rounded">
+    Previous
+  </button>
+
+  <button type="button" onclick="nextQ()" class="px-4 py-2 bg-blue-600 text-white rounded">
+    Next
+  </button>
+
+  <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">
+    Submit
+  </button>
+</div>
+
 </form>
 
-<script>
-let timeLeft = 60;
-const timer = setInterval(() => {
-  document.getElementById("timer").innerText = timeLeft;
-  timeLeft--;
-  if (timeLeft < 0) {
-    clearInterval(timer);
-    document.getElementById("quizForm").submit();
-  }
-}, 1000);
-</script>
-{% endblock %}
+<script src="/static/js/quiz.js"></script>
 
+{% endblock %}
