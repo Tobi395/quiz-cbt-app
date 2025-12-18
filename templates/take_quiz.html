@@ -1,44 +1,165 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="flex justify-between items-center mb-4">
-  <h2 class="font-bold text-lg">Examination</h2>
-  <div class="bg-red-600 text-white px-4 py-1 rounded text-sm">
-    Time Remaining
+<section class="max-w-6xl mx-auto px-4 py-6 fade-in">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold">{{ session.subject }} Quiz</h2>
+
+    <div id="timer"
+         class="text-lg font-semibold bg-gray-200 px-4 py-2 rounded">
+      50:00
+    </div>
   </div>
-</div>
 
-<form id="quizForm" method="post" action="/submit/{{ subject_id }}">
+  <!-- COUNTERS -->
+  <div class="flex justify-between mb-4 text-sm text-gray-700">
+    <span>Answered: <strong id="answeredCount">0</strong></span>
+    <span>Unanswered: <strong id="unansweredCount">{{ questions|length }}</strong></span>
+  </div>
 
-{% for q in questions %}
-<div class="question bg-white p-5 rounded shadow mb-4 hidden">
-  <p class="font-semibold mb-3">{{ loop.index }}. {{ q.question }}</p>
+  <div class="grid md:grid-cols-4 gap-6">
 
-  {% for opt in ['A','B','C','D'] %}
-  <label class="block mb-2">
-    <input type="radio" name="{{ q.id }}" value="{{ opt }}">
-    Option {{ opt }}
-  </label>
-  {% endfor %}
-</div>
-{% endfor %}
+    <!-- QUESTION NAVIGATION -->
+    <aside class="md:col-span-1 bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-3">Questions</h3>
 
-<div class="flex justify-between mt-6">
-  <button type="button" onclick="prevQ()" class="px-4 py-2 bg-gray-400 text-white rounded">
-    Previous
-  </button>
+      <div id="navPanel" class="grid grid-cols-5 gap-2">
+        {% for q in questions %}
+          <button type="button"
+                  class="nav-btn border rounded text-sm py-1"
+                  data-target="q{{ q.id }}">
+            {{ loop.index }}
+          </button>
+        {% endfor %}
+      </div>
+    </aside>
 
-  <button type="button" onclick="nextQ()" class="px-4 py-2 bg-blue-600 text-white rounded">
-    Next
-  </button>
+    <!-- QUIZ QUESTIONS -->
+    <form method="POST"
+          action="{{ url_for('submit', subject_id=subject_id) }}"
+          id="quizForm"
+          class="md:col-span-3 space-y-6">
 
-  <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">
-    Submit
-  </button>
-</div>
+      {% for q in questions %}
+        <div id="q{{ q.id }}" class="card question-block">
+          <p class="font-semibold mb-3">
+            {{ loop.index }}. {{ q.question }}
+          </p>
 
-</form>
+          <div class="space-y-2">
+            {% for opt, label in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)] %}
+              <label class="block">
+                <input type="radio"
+                       name="{{ q.id }}"
+                       value="{{ opt }}"
+                       class="answer-option">
+                {{ label }}
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
 
-<script src="/static/js/quiz.js"></script>
+      <button type="submit"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded">
+        Submit Quiz
+      </button>
+    </form>
+
+  </div>
+</section>
+
+<!-- ================= CBT JAVASCRIPT ================= -->
+<script>
+(function () {
+
+  /* ---------------- TIMER ---------------- */
+  const TOTAL_TIME = 50 * 60;
+  let remaining = TOTAL_TIME;
+  const timerEl = document.getElementById("timer");
+  const form = document.getElementById("quizForm");
+  let warned = false;
+
+  const interval = setInterval(() => {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    timerEl.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+
+    if (remaining === 300 && !warned) {
+      warned = true;
+      timerEl.classList.add("bg-red-600", "text-white");
+      alert("⚠️ 5 minutes remaining");
+    }
+
+    if (remaining <= 0) {
+      clearInterval(interval);
+      alert("⏱ Time up. Submitting quiz.");
+      form.submit();
+    }
+
+    remaining--;
+  }, 1000);
+
+  /* ---------------- NAVIGATION ---------------- */
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById(btn.dataset.target)
+        .scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  /* ---------------- ANSWER TRACKING ---------------- */
+  const answeredEl = document.getElementById("answeredCount");
+  const unansweredEl = document.getElementById("unansweredCount");
+  const navButtons = document.querySelectorAll(".nav-btn");
+  const totalQuestions = navButtons.length;
+
+  function updateCounts() {
+    let answered = new Set();
+    document.querySelectorAll(".answer-option:checked").forEach(i => {
+      answered.add(i.name);
+    });
+
+    answeredEl.textContent = answered.size;
+    unansweredEl.textContent = totalQuestions - answered.size;
+
+    navButtons.forEach(btn => {
+      const qid = btn.dataset.target.replace("q", "");
+      btn.classList.toggle("bg-green-600", answered.has(qid));
+      btn.classList.toggle("text-white", answered.has(qid));
+    });
+  }
+
+  document.querySelectorAll(".answer-option").forEach(opt => {
+    opt.addEventListener("change", () => {
+      updateCounts();
+      autoSave();
+    });
+  });
+
+  /* ---------------- AUTOSAVE ---------------- */
+  function autoSave() {
+    const data = {};
+    document.querySelectorAll(".answer-option:checked").forEach(i => {
+      data[i.name] = i.value;
+    });
+
+    fetch("/autosave", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+  }
+
+  /* ---------------- ANTI-CHEAT ---------------- */
+  window.addEventListener("beforeunload", function (e) {
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
+})();
+</script>
 
 {% endblock %}
