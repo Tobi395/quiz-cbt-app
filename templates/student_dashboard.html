@@ -1,21 +1,70 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h2 class="text-2xl font-bold mb-6">Available Exams</h2>
+<section class="max-w-6xl mx-auto px-4 py-6 fade-in">
+  <h2 class="text-2xl font-bold mb-6">Available Exams</h2>
 
-<div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-  {% for s in subjects %}
-  <div class="bg-white p-6 rounded shadow">
-    <h3 class="font-semibold text-lg mb-2">{{ s.name }}</h3>
-    <p class="text-sm text-gray-500 mb-4">
-      40 Questions • 50 Minutes
-    </p>
-    <a href="/quiz/{{ s.id }}"
-       class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-       Start Exam
-    </a>
+  <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+    {% for s in subjects %}
+      <div class="card">
+        <h3 class="font-semibold text-lg mb-2">{{ s.name }}</h3>
+
+        {% if attempts.get(s.id) %}
+          <p class="text-sm text-green-600 mb-2">
+            ✔ Completed — Score:
+            {{ attempts[s.id].score }}/{{ attempts[s.id].total }}
+          </p>
+
+          <button class="w-full bg-gray-400 text-white py-2 rounded" disabled>
+            Exam Completed
+          </button>
+        {% else %}
+          <p class="text-sm text-gray-500 mb-4">
+            40 Questions • 50 Minutes
+          </p>
+
+          <button onclick="openInstructions({{ s.id }})"
+                  class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+            Start Exam
+          </button>
+        {% endif %}
+      </div>
+    {% endfor %}
   </div>
-  {% endfor %}
+</section>
+
+<!-- INSTRUCTIONS MODAL -->
+<div id="instructionsModal"
+     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+  <div class="bg-white max-w-md p-6 rounded">
+    <h3 class="text-lg font-bold mb-3">Exam Instructions</h3>
+    <ul class="text-sm space-y-2">
+      <li>• 40 questions, 50 minutes</li>
+      <li>• Auto-submit on timeout</li>
+      <li>• No exam retake allowed</li>
+      <li>• Do not refresh or close the page</li>
+    </ul>
+
+    <div class="mt-4 flex justify-end gap-3">
+      <button onclick="closeInstructions()" class="px-4 py-2 border rounded">
+        Cancel
+      </button>
+      <a id="startExamLink"
+         class="px-4 py-2 bg-blue-600 text-white rounded">
+        Start Exam
+      </a>
+    </div>
+  </div>
 </div>
+
+<script>
+function openInstructions(subjectId) {
+  document.getElementById("instructionsModal").classList.remove("hidden");
+  document.getElementById("startExamLink").href = "/quiz/" + subjectId;
+}
+function closeInstructions() {
+  document.getElementById("instructionsModal").classList.add("hidden");
+}
+</script>
 
 {% endblock %}
