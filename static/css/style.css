@@ -20,6 +20,11 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.start-exam-btn:hover {
+  transform: translateY(-1px);
+}
+
+
 /* Primary CTA */
 .btn-primary {
   background-color: #2563eb;
