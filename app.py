@@ -202,7 +202,14 @@ def submit(subject_id):
 def admin_dashboard():
     if not current_user.is_admin:
         return "Unauthorized"
-    return render_template("admin_dashboard.html")
+
+    stats = db.session.query(
+        Subject.name,
+        db.func.count(Attempt.id)
+    ).join(Attempt, Attempt.subject_id == Subject.id, isouter=True)\
+     .group_by(Subject.id).all()
+
+    return render_template("admin_dashboard.html", stats=stats)
 
 
 # ===================== STUDENT =====================
