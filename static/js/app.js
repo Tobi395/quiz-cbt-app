@@ -10,3 +10,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+//Prevent accidental clicks
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".start-exam-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const ok = confirm(
+        "This exam will last 50 minutes and cannot be paused.\nDo you want to continue?"
+      );
+      if (!ok) {
+        e.preventDefault();
+      }
+    });
+  });
+});
