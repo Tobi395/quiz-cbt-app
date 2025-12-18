@@ -205,6 +205,22 @@ def admin_dashboard():
     return render_template("admin_dashboard.html")
 
 
+# ===================== STUDENT =====================
+
+@app.route("/student")
+@login_required
+def student_dashboard():
+    subjects = Subject.query.all()
+    attempts = {
+        a.subject_id: a for a in Attempt.query.filter_by(user_id=current_user.id).all()
+    }
+    return render_template(
+        "student_dashboard.html",
+        subjects=subjects,
+        attempts=attempts
+    )
+
+
 # ===================== RUN =====================
 
 if __name__ == "__main__":
